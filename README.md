@@ -2,7 +2,7 @@
 
 A simple and responsive tool to download YouTube video thumbnails in all available resolutions.
 
-**[➡️ Live Tool Link](https://your-github-username.github.io/repository-name/)**  <!-- এখানে আপনার লাইভ লিঙ্কটি দিন -->
+**[➡️ Live Tool Link](https://hafezmdsalmanrahman.github.io/YouTube-Thumbnail-Downloader-/)**  <!-- এখানে আপনার লাইভ লিঙ্কটি দিন -->
 
 ## ✨ Features
 - Clean and modern user interface.
@@ -12,7 +12,7 @@ A simple and responsive tool to download YouTube video thumbnails in all availab
 - One-click download.
 
 ## 🚀 How to Use
-1.  Go to the [live tool](https://your-github-username.github.io/repository-name/). <!-- এখানেও লাইভ লিঙ্কটি দিন -->
+1.  Go to the [live tool](https://hafezmdsalmanrahman.github.io/YouTube-Thumbnail-Downloader-/). <!-- এখানেও লাইভ লিঙ্কটি দিন -->
 2.  Paste the URL of any YouTube video.
 3.  Click the search button.
 4.  Choose your desired resolution and click the download icon.
