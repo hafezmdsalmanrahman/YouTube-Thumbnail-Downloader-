@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ইউটিউব থাম্বনেইল ডাউনলোডার</title>
+    
+    <!-- SEO and Social Sharing Meta Tags -->
+    <meta name="description" content="যেকোনো ইউটিউব ভিডিওর থাম্বনেইল সর্বোচ্চ কোয়ালিটিতে ডাউনলোড করুন। শুধু ভিডিওর লিঙ্ক পেস্ট করুন এবং পছন্দের রেজোলিউশন বেছে নিন।">
+    
+    <!-- Mobile Browser Theme Color -->
+    <meta name="theme-color" content="#1f2937">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'sans': ['Hind Siliguri', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #111827; background-image: radial-gradient(circle at 1px 1px, #374151 1px, transparent 0); background-size: 25px 25px; }
+        .preview-container-bg { background-size: cover; background-position: center; }
+        .active-btn { background-color: #ef4444 !important; color: white !important; border-color: #ef4444 !important; }
+        .toast-enter { transform: translateX(100%); opacity: 0; }
+        .toast-enter-active { transform: translateX(0); opacity: 1; }
+        .toast-exit { opacity: 0; }
+        /* For Accessibility: Visually hide elements but keep them for screen readers */
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+    </style>
+</head>
+<body class="font-sans flex items-center justify-center min-h-screen p-4 text-white">
+
+    <!-- Toast container for notifications, enhanced for accessibility -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3 w-full max-w-xs" role="status" aria-live="polite"></div>
+
+    <div class="bg-gray-800/50 backdrop-blur-xl border border-gray-700 p-6 md:p-8 rounded-2xl shadow-2xl shadow-red-500/10 w-full max-w-6xl mx-auto">
+        
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent">YouTube Thumbnail Downloader</h1>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="flex flex-col">
+                <p class="text-gray-400 mb-4">একটি ইউটিউব ভিডিওর লিঙ্ক দিন এবং পছন্দসই থাম্বনেইল ডাউনলোড করুন।</p>
+                <div class="flex gap-3 mb-6">
+                    <label for="youtube-url" class="sr-only">ইউটিউব ভিডিওর লিঙ্ক</label>
+                    <input type="text" id="youtube-url" placeholder="ইউটিউব ভিডিওর লিঙ্ক..." class="w-full bg-gray-900/50 text-white border border-gray-600 rounded-lg pl-4 pr-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all">
+                    <button type="button" id="get-thumbnail-btn" aria-label="থাম্বনেইল খুঁজুন" class="bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div id="loader" class="text-center py-4 hidden">
+                    <i class="fas fa-spinner fa-spin text-2xl text-red-500" aria-hidden="true"></i>
+                    <span class="sr-only">লোড হচ্ছে...</span>
+                </div>
+                <div id="options-container" class="space-y-3 hidden"></div>
+            </div>
+
+            <div id="preview-panel" class="w-full aspect-video bg-gray-900/50 border-2 border-dashed border-gray-600 rounded-xl flex items-center justify-center relative overflow-hidden transition-all duration-500 preview-container-bg">
+                <div id="placeholder" class="text-center text-gray-500 z-10">
+                    <i class="fa-regular fa-image text-5xl mb-4" aria-hidden="true"></i>
+                    <p>থাম্বনেইল প্রিভিউ</p>
+                </div>
+                <img id="preview-image" src="" class="absolute top-0 left-0 w-full h-full object-cover rounded-xl hidden" alt="Thumbnail Preview">
+            </div>
+        </main>
+
+        <footer class="text-center mt-8 pt-4 border-t border-gray-700">
+            <p class="text-gray-500">ডিজাইন ও ডেভেলপ করেছেন <span class="font-semibold text-red-400">সালমান রহমান</span></p>
+        </footer>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('youtube-url');
+        const getThumbnailBtn = document.getElementById('get-thumbnail-btn');
+        const optionsContainer = document.getElementById('options-container');
+        const loader = document.getElementById('loader');
+        const previewPanel = document.getElementById('preview-panel');
+        const placeholder = document.getElementById('placeholder');
+        const previewImage = document.getElementById('preview-image');
+        const toastContainer = document.getElementById('toast-container');
+
+        function showToast(message, type = 'info', duration = 4000) {
+            const toastDetails = {
+                success: { icon: 'fa-circle-check', color: 'bg-green-600' },
+                error: { icon: 'fa-circle-xmark', color: 'bg-red-600' },
+                warning: { icon: 'fa-triangle-exclamation', color: 'bg-yellow-500' },
+                info: { icon: 'fa-circle-info', color: 'bg-blue-500' },
+            };
+            const detail = toastDetails[type];
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 p-4 rounded-lg shadow-lg text-white ${detail.color} transform transition-all duration-500 ease-in-out toast-enter`;
+            toast.innerHTML = `<i class="fa-solid ${detail.icon} text-xl" aria-hidden="true"></i><span>${message}</span>`;
+            
+            toastContainer.appendChild(toast);
+            setTimeout(() => { toast.classList.add('toast-enter-active'); }, 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('toast-enter-active');
+                toast.classList.add('toast-exit');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, duration);
+        }
+
+        getThumbnailBtn.addEventListener('click', handleFetchThumbnails);
+        urlInput.addEventListener('keypress', (e) => e.key === 'Enter' && handleFetchThumbnails());
+
+        function handleFetchThumbnails() {
+            resetUI();
+            loader.classList.remove('hidden');
+            const url = urlInput.value.trim();
+            if (!url) {
+                showError('দয়া করে একটি ইউটিউব লিঙ্ক দিন।', 'warning');
+                return;
+            }
+            const videoId = getVideoId(url);
+            if (videoId) {
+                displayThumbnailOptions(videoId);
+            } else {
+                showError('সঠিক ইউটিউব ভিডিও লিঙ্ক পাওয়া যায়নি।');
+            }
+        }
+        
+        function resetUI() {
+            optionsContainer.innerHTML = '';
+            optionsContainer.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            previewImage.classList.add('hidden');
+            previewImage.src = '';
+            previewPanel.style.backgroundImage = '';
+            previewPanel.classList.remove('border-solid', 'border-red-500');
+            previewPanel.classList.add('border-dashed', 'border-gray-600');
+        }
+
+        function showError(message, type = 'error') {
+            loader.classList.add('hidden');
+            showToast(message, type);
+        }
+
+        function getVideoId(url) {
+            const patterns = [
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+                /(?:https?:\/\/)?youtu\.be\/([a-zA-Z0-9_-]{11})/,
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+            ];
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) return match[1];
+            }
+            return null;
+        }
+
+        function displayThumbnailOptions(videoId) {
+            const resolutions = [
+                { name: 'সর্বোচ্চ (HD)', code: 'maxresdefault' },
+                { name: 'স্ট্যান্ডার্ড (SD)', code: 'sddefault' },
+                { name: 'উচ্চ', code: 'hqdefault' },
+                { name: 'মাঝারি', code: 'mqdefault' },
+                { name: 'ডিফল্ট', code: 'default' }
+            ];
+            let foundAny = false;
+            let isFirstValidThumb = true;
+
+            const promises = resolutions.map(res => new Promise(resolve => {
+                const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/${res.code}.jpg`;
+                const img = new Image();
+                img.src = thumbnailUrl;
+                img.onload = () => resolve({ ...res, url: thumbnailUrl, width: img.naturalWidth, height: img.naturalHeight, status: 'ok' });
+                img.onerror = () => resolve({ ...res, status: 'error' });
+            }));
+
+            Promise.all(promises).then(results => {
+                loader.classList.add('hidden');
+                results.forEach(result => {
+                    if (result.status === 'ok' && result.width > 120) { // Filter out tiny error images
+                        if (!foundAny) {
+                            optionsContainer.classList.remove('hidden');
+                            foundAny = true;
+                        }
+
+                        const optionDiv = document.createElement('div');
+                        optionDiv.className = "flex items-center justify-between bg-gray-700/50 p-2 rounded-lg";
+                        
+                        const downloadLabel = `${result.name} থাম্বনেইল ডাউনলোড করুন (${result.width}x${result.height})`;
+
+                        optionDiv.innerHTML = `
+                            <button type="button" class="flex-grow text-left px-3 py-3 border border-gray-600 rounded-md hover:bg-red-500 hover:border-red-500 transition-colors" data-url="${result.url}">
+                                ${result.name} <span class="text-xs text-gray-400">(${result.width}x${result.height})</span>
+                            </button>
+                            <a href="${result.url}" 
+                               target="_blank" 
+                               download="thumbnail_${videoId}_${result.code}.jpg" 
+                               class="download-link ml-3 text-gray-300 hover:text-white transition-colors p-3 rounded-md hover:bg-gray-600"
+                               aria-label="${downloadLabel}"
+                               title="${downloadLabel}">
+                                <i class="fa-solid fa-download text-lg" aria-hidden="true"></i>
+                            </a>
+                        `;
+                        
+                        const viewButton = optionDiv.querySelector('button');
+                        viewButton.addEventListener('click', () => {
+                            updatePreview(result.url);
+                            document.querySelectorAll('#options-container button').forEach(b => b.classList.remove('active-btn'));
+                            viewButton.classList.add('active-btn');
+                        });
+                        
+                        optionsContainer.appendChild(optionDiv);
+                        
+                        if (isFirstValidThumb) {
+                            updatePreview(result.url);
+                            viewButton.classList.add('active-btn');
+                            isFirstValidThumb = false;
+                        }
+                    }
+                });
+
+                if (foundAny) {
+                    showToast('থাম্বনেইল সফলভাবে লোড হয়েছে!', 'success');
+                } else {
+                    showError("এই ভিডিওর জন্য কোনো থাম্বনেইল পাওয়া যায়নি।");
+                }
+            });
+        }
+
+        function updatePreview(url) {
+            placeholder.classList.add('hidden');
+            previewImage.src = url;
+            previewImage.classList.remove('hidden');
+            previewPanel.style.backgroundImage = `url(${url})`;
+            previewPanel.classList.remove('border-dashed', 'border-gray-600');
+            previewPanel.classList.add('border-solid', 'border-red-500');
+        }
+    </script>
+</body>
+</html>
